@@ -1,0 +1,166 @@
+"""Local HTTP/WebSocket + EA F1 25 2026 Season Pack UDP bridge.
+
+Uses only Python's standard library. Packet offsets follow EA's version 11.0
+2026 Season Pack output structures. Values are published only when parsed from
+a correctly sized format-2026 packet.
+"""
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import base64, hashlib, json, os, socket, struct, threading, time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+UDP_PORT = int(os.getenv("F1_UDP_PORT", "20777"))
+HTTP_PORT = int(os.getenv("HTTP_PORT", "8080"))
+HEADER = 29
+CARS = 24
+PACKET_LENGTHS = {0: 1325, 1: 926, 2: 1399, 3: 45, 4: 1470, 5: 1233,
+                  6: 1448, 7: 1445, 8: 1134, 9: 1062, 10: 1133,
+                  11: 1460, 12: 231, 13: 273, 14: 104, 15: 1231, 16: 269}
+SESSION_TYPES = {0:"UNKNOWN",1:"P1",2:"P2",3:"P3",4:"SHORT QUALI",5:"QUALI",
+                 6:"S1",7:"S2",8:"S3",9:"SHORT SPRINT",10:"SPRINT",11:"RACE",
+                 12:"TIME TRIAL"}
+FLAG_NAMES = {-1:"--",0:"GREEN",1:"GREEN",2:"BLUE",3:"YELLOW"}
+
+lock = threading.RLock()
+clients = set()
+state = {"format":2026,"status":"WAITING FOR TELEMETRY","trackId":None,
+         "trackName":None,"sessionName":None,"speed":None,"gear":None,"rpm":None,
+         "rpmPercent":None,"throttle":None,"brake":None,"currentLapMs":None,
+         "lastLapMs":None,"bestLapMs":None,"lap":None,"position":None,
+         "sectors":[None,None,None],"tyreTemps":[None,None,None,None],
+         "tyreWear":None,"compound":None,"ersPercent":None,"ersKj":None,
+         "ersMode":None,"harvestKw":None,"deployKw":None,"fuelKg":None,
+         "straightMode":"UNAVAILABLE","overtake":None,"safetyCar":None,
+         "safetyDelta":None,"flag":"GREEN","mapReady":False,"updated":None}
+
+def parse_header(data):
+    if len(data) < HEADER: return None
+    fmt, year, major, minor, version, pid = struct.unpack_from("<HBBBBB", data, 0)
+    session_uid = struct.unpack_from("<Q", data, 8)[0]
+    session_time = struct.unpack_from("<f", data, 16)[0]
+    frame, overall = struct.unpack_from("<II", data, 20)
+    player, secondary = struct.unpack_from("<BB", data, 28)
+    return {"format":fmt,"year":year,"pid":pid,"uid":session_uid,
+            "time":session_time,"frame":frame,"player":player}
+
+def finite(v):
+    return v if isinstance(v,(int,float)) and (v == v) and abs(v) != float("inf") else None
+
+def parse_packet(data):
+    h = parse_header(data)
+    if not h or h["format"] != 2026 or h["pid"] not in PACKET_LENGTHS: return None
+    if len(data) != PACKET_LENGTHS[h["pid"]]: return None
+    pid, idx = h["pid"], h["player"]
+    if pid in (0,13): return None
+    with lock:
+        if state.get("sessionUid") != h["uid"]:
+            state.update(sessionUid=h["uid"],trackId=None,trackName=None,sessionName=None,
+                         mapReady=False,bestLapMs=None)
+        if pid == 1:
+            # session packet fixed fields before marshal-zone array
+            track_length = struct.unpack_from("<H",data,34)[0]
+            session_type = data[36]
+            track_id = struct.unpack_from("<b",data,37)[0]
+            safety = data[HEADER+110] # safety-car status after 21 marshal zones
+            state["trackId"] = track_id if track_id >= 0 else None
+            state["trackName"] = ("TRACK "+str(track_id)) if track_id >= 0 else None
+            state["sessionName"] = SESSION_TYPES.get(session_type,"SESSION")
+            state["trackLength"] = track_length
+            state["safetyCar"] = {0:None,1:"SAFETY CAR",2:"VSC",3:"FORMATION"}.get(safety)
+        elif pid == 2:
+            off = HEADER + idx*57
+            state["lastLapMs"] = struct.unpack_from("<I",data,off)[0] or None
+            state["currentLapMs"] = struct.unpack_from("<I",data,off+4)[0] or None
+            s1ms, s1min = struct.unpack_from("<HB",data,off+8)
+            s2ms, s2min = struct.unpack_from("<HB",data,off+11)
+            state["sectors"]=[s1ms+s1min*60000,s2ms+s2min*60000,None]
+            state["safetyDelta"] = finite(struct.unpack_from("<f",data,off+32)[0])
+            state["position"]=data[off+36] or None
+            state["lap"]=data[off+37] or None
+        elif pid == 6:
+            off = HEADER + idx*59
+            state["speed"]=struct.unpack_from("<H",data,off)[0]
+            state["throttle"]=round(struct.unpack_from("<f",data,off+2)[0]*100)
+            state["brake"]=round(struct.unpack_from("<f",data,off+10)[0]*100)
+            state["gear"]=struct.unpack_from("<b",data,off+15)[0]
+            state["rpm"]=struct.unpack_from("<H",data,off+16)[0]
+            maxrpm=state.get("maxRpm")
+            state["rpmPercent"]=min(100,state["rpm"]*100/maxrpm) if maxrpm else None
+            state["tyreTemps"]=list(data[off+30:off+34])
+        elif pid == 7:
+            off = HEADER + idx*59
+            state["fuelKg"]=round(struct.unpack_from("<f",data,off+5)[0],1)
+            state["maxRpm"]=struct.unpack_from("<H",data,off+17)[0]
+            state["compound"]=str(data[off+26])
+            flag=struct.unpack_from("<b",data,off+28)[0]
+            state["flag"]=FLAG_NAMES.get(flag,"--")
+            energy=struct.unpack_from("<f",data,off+37)[0]
+            state["ersKj"]=round(energy/1000,1) if energy >= 0 else None
+            state["ersMode"]={0:"NONE",1:"MEDIUM",2:"HOTLAP",3:"BOOST"}.get(data[off+41],"--")
+            state["harvestKw"]=round((struct.unpack_from("<f",data,off+42)[0]+struct.unpack_from("<f",data,off+46)[0])/1000,1)
+            state["deployKw"]=round(struct.unpack_from("<f",data,off+54)[0]/1000,1)
+        elif pid == 16:
+            # Format/length is validated. EA's active aero/overtake fields are
+            # surfaced only after their exact v11 layout is implemented.
+            pass
+        state["status"]="LIVE"
+        state["updated"]=time.time()
+        return dict(state)
+
+def ws_frame(payload):
+    n=len(payload)
+    head=bytes([0x81,n]) if n<126 else bytes([0x81,126])+struct.pack("!H",n) if n<65536 else bytes([0x81,127])+struct.pack("!Q",n)
+    return head+payload
+
+def broadcast(snapshot):
+    raw=ws_frame(json.dumps(snapshot,separators=(",",":")).encode())
+    with lock: targets=list(clients)
+    for sock in targets:
+        try: sock.sendall(raw)
+        except OSError:
+            with lock: clients.discard(sock)
+            try:sock.close()
+            except OSError:pass
+
+class Handler(BaseHTTPRequestHandler):
+    protocol_version="HTTP/1.1"
+    def log_message(self,*args): pass
+    def do_GET(self):
+        if self.path=="/ws":
+            key=self.headers.get("Sec-WebSocket-Key")
+            if not key or self.headers.get("Upgrade","").lower()!="websocket":
+                self.send_error(400);return
+            accept=base64.b64encode(hashlib.sha1((key+"258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()).digest()).decode()
+            self.send_response(101,"Switching Protocols")
+            self.send_header("Upgrade","websocket");self.send_header("Connection","Upgrade")
+            self.send_header("Sec-WebSocket-Accept",accept);self.end_headers()
+            sock=self.connection
+            with lock: clients.add(sock)
+            try:
+                while sock.recv(1024): pass
+            except OSError: pass
+            finally:
+                with lock: clients.discard(sock)
+            return
+        path="/" if self.path=="/" else self.path.lstrip("/")
+        if path not in ("index.html","app.js","style.css"): self.send_error(404);return
+        body=(ROOT/path).read_bytes()
+        kinds={".html":"text/html; charset=utf-8",".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8"}
+        self.send_response(200);self.send_header("Content-Type",kinds[Path(path).suffix])
+        self.send_header("Content-Length",str(len(body)));self.send_header("Cache-Control","no-store")
+        self.end_headers();self.wfile.write(body)
+
+def udp_loop():
+    sock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+    sock.bind(("0.0.0.0",UDP_PORT))
+    print(f"F1 2026 UDP listening on 0.0.0.0:{UDP_PORT}")
+    while True:
+        data,_=sock.recvfrom(65535)
+        parsed=parse_packet(data)
+        if parsed: broadcast(parsed)
+
+if __name__=="__main__":
+    threading.Thread(target=udp_loop,daemon=True).start()
+    print(f"Fermaxo display: http://0.0.0.0:{HTTP_PORT}")
+    ThreadingHTTPServer(("0.0.0.0",HTTP_PORT),Handler).serve_forever()
