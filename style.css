@@ -52,3 +52,105 @@
  .dash.ers-critical .energy{height:75px;min-height:75px}
 }
 @media(prefers-reduced-motion:reduce){.dash .layout,.dash .section,.dash .tyre-grid,.dash .performance,.dash .timing,.dash .sectors,.dash .energy,.dash .lap-delta{transition:none}}
+
+
+/* Space-filling instrument layout: same telemetry, larger readable zones. */
+.dash{max-width:none;padding:clamp(5px,1vw,16px);gap:clamp(4px,.65vw,9px)}
+.top{height:clamp(32px,6vh,52px);min-height:clamp(32px,6vh,52px);gap:clamp(8px,1vw,16px);padding-bottom:clamp(4px,.6vh,8px)}
+.brand{font-size:clamp(12px,1.1vw,17px)}
+.mark{width:clamp(22px,2vw,34px);height:clamp(22px,2vw,34px);font-size:clamp(16px,1.4vw,23px)}
+.session{font-size:clamp(9px,.85vw,13px);gap:clamp(7px,.8vw,13px)}
+.layout{grid-template-columns:minmax(0,1.03fr) minmax(0,.96fr) minmax(0,1.01fr);gap:clamp(5px,.7vw,11px)}
+.section{padding:clamp(7px,.8vw,13px)}
+.section-title{height:clamp(23px,3.5vh,32px);min-height:clamp(23px,3.5vh,32px);font-size:clamp(10px,.9vw,14px);align-items:center}
+.section-title span{font-size:clamp(8px,.7vw,11px)}
+.tyre-grid{gap:clamp(7px,.75vw,12px);padding:clamp(8px,.8vw,13px) 0}
+.tyre-block{padding:clamp(7px,.8vw,13px);border-width:1px;border-top-width:3px}
+.tyre-block header{font-size:clamp(9px,.78vw,12px)}
+.tyre-block header b{font-size:clamp(12px,1vw,16px)}
+.tyre-block strong{font-size:clamp(24px,4.2vw,54px)}
+.condition{font-size:clamp(9px,.75vw,12px)}
+.temp-bar{height:clamp(5px,.65vh,8px)}
+.tyre-block footer{font-size:clamp(8px,.66vw,10px);gap:6px}
+.performance{height:clamp(100px,17vh,180px);min-height:clamp(100px,17vh,180px);padding-top:8px}
+.performance .section-title{height:22px;min-height:22px;font-size:clamp(9px,.75vw,12px)}
+.trackmap{height:calc(100% - 50px);min-height:50px;font-size:clamp(9px,.8vw,13px)}
+.mapfoot{font-size:clamp(8px,.68vw,11px);padding-top:6px}
+.center{padding:clamp(8px,1vw,16px)}
+.center-top{top:clamp(9px,1vh,16px);font-size:clamp(10px,.85vw,14px)}
+.gear-label{font-size:clamp(11px,.9vw,15px);margin-top:14px}
+.gear{font-size:clamp(96px,19vh,210px)}
+.speed{gap:clamp(8px,1vw,16px);margin-top:clamp(10px,1.5vh,20px)}
+.speed strong{font-size:clamp(45px,9vh,100px)}
+.speed span{font-size:clamp(11px,.9vw,15px)}
+.lap-delta{margin-top:clamp(10px,1.5vh,20px);padding:clamp(6px,.65vw,10px) clamp(12px,1.2vw,20px)}
+.lap-delta span{font-size:clamp(9px,.75vw,12px)}
+.lap-delta b{font-size:clamp(17px,1.6vw,26px)}
+.center-hint{bottom:clamp(8px,.8vh,14px);font-size:clamp(9px,.72vw,12px)}
+.right{gap:clamp(5px,.6vh,9px)}
+.rpm-block,.pedals,.aero,.timing,.status-block{border:1px solid #75838a;padding:clamp(7px,.75vw,12px);background:#030506}
+.rpm-heading{font-size:clamp(10px,.8vw,13px)}
+.rpm-heading b{font-size:clamp(13px,1vw,17px)}
+.lights{height:clamp(14px,2.3vh,23px);gap:clamp(4px,.4vw,7px);margin-top:7px}
+.lights i{height:100%}
+.pedals{gap:clamp(7px,.7vh,11px)}
+.pedals>div{grid-template-columns:minmax(62px,22%) 1fr minmax(37px,12%);gap:clamp(7px,.7vw,12px);font-size:clamp(9px,.72vw,12px)}
+.pedals b{font-size:clamp(10px,.8vw,13px)}
+.track{height:clamp(7px,.9vh,11px)}
+.aero{grid-template-columns:1fr auto;gap:clamp(7px,.7vw,12px);font-size:clamp(10px,.78vw,13px)}
+.aero>b{font-size:clamp(13px,1vw,17px);padding:4px 8px;border:1px solid var(--cyan);text-align:center;min-width:94px}
+.aero span:last-child{grid-column:1/3;font-size:clamp(9px,.72vw,12px)}
+.timing{padding:clamp(8px,.8vw,13px)}
+.timing-head{font-size:clamp(9px,.72vw,12px)}
+.timing-head b{font-size:clamp(11px,.9vw,15px);margin-left:6px}
+.sectors{gap:clamp(5px,.5vw,8px);margin-top:clamp(7px,.8vh,12px)}
+.sectors span{padding:clamp(6px,.65vw,10px);font-size:clamp(9px,.72vw,12px);border-left-width:3px}
+.sectors b{font-size:clamp(11px,.95vw,16px);margin-top:4px}
+.status-block{min-height:clamp(52px,9vh,90px);padding:clamp(8px,.9vw,14px);border-width:2px}
+.status-block>div:first-child{gap:clamp(10px,1vw,16px)}
+.status-block small{font-size:clamp(9px,.7vw,11px)}
+.status-block strong{font-size:clamp(18px,1.8vw,30px)}
+.status-detail{font-size:clamp(10px,.8vw,13px)}
+.status-detail b{font-size:clamp(12px,1vw,17px)}
+.energy{height:clamp(86px,15vh,145px);min-height:clamp(86px,15vh,145px);grid-template-columns:clamp(110px,12vw,190px) 1fr;gap:clamp(12px,1.5vw,24px);padding:clamp(9px,1vw,16px)}
+.energy-label>span{font-size:clamp(9px,.8vw,13px)}
+.energy-label>strong{font-size:clamp(36px,5vh,60px)}
+.energy-label>i{font-size:clamp(9px,.7vw,11px)}
+.battery{height:clamp(26px,4.8vh,48px);padding:4px}
+.battery:after{right:-7px;top:25%;height:50%;width:5px}
+.battery-foot{gap:clamp(6px,.8vw,12px);padding-top:clamp(7px,.8vh,12px);font-size:clamp(8px,.7vw,11px)}
+.battery-foot b{font-size:clamp(10px,.82vw,13px);margin-left:5px}
+.foot{height:clamp(16px,2vh,24px);min-height:clamp(16px,2vh,24px);font-size:clamp(8px,.68vw,11px)}
+.dash[data-mode="qualifying"] .performance,.dash[data-mode="practice"] .performance{height:clamp(118px,21vh,210px);min-height:clamp(118px,21vh,210px)}
+.dash[data-mode="qualifying"] .trackmap,.dash[data-mode="practice"] .trackmap{height:calc(100% - 50px)}
+@media(orientation:portrait){
+ .dash{padding:5px;gap:4px}
+ .layout{grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1.1fr) minmax(0,1fr);gap:5px}
+ .top{height:clamp(28px,5vh,40px);min-height:clamp(28px,5vh,40px)}
+ .tyre-block strong{font-size:clamp(22px,4vh,38px)}
+ .gear{font-size:clamp(72px,13vh,130px)}
+ .speed strong{font-size:clamp(36px,7vh,66px)}
+ .energy{height:clamp(78px,13vh,112px);min-height:clamp(78px,13vh,112px);grid-template-columns:75px 1fr}
+ .energy-label>strong{font-size:clamp(30px,5vh,44px)}
+ .battery{height:clamp(19px,3.5vh,30px)}
+ .battery-foot{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-height:440px) and (orientation:landscape){
+ .dash{padding:4px 7px;gap:3px}
+ .top{height:28px;min-height:28px}
+ .section{padding:5px}
+ .section-title{height:20px;min-height:20px}
+ .tyre-grid{gap:5px;padding:5px 0}
+ .tyre-block{padding:5px}
+ .tyre-block strong{font-size:clamp(20px,7vh,34px)}
+ .performance{height:clamp(80px,19vh,100px);min-height:clamp(80px,19vh,100px)}
+ .trackmap{min-height:35px}
+ .gear{font-size:clamp(80px,19vh,120px)}
+ .speed strong{font-size:clamp(35px,8vh,58px)}
+ .energy{height:clamp(70px,16vh,80px);min-height:clamp(70px,16vh,80px)}
+ .battery{height:20px}
+ .right{gap:4px}
+ .rpm-block,.pedals,.aero,.timing,.status-block{padding:5px}
+ .status-block{min-height:42px}
+ .foot{height:12px;min-height:12px}
+}
