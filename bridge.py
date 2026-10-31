@@ -16,9 +16,10 @@ CARS = 24
 PACKET_LENGTHS = {0: 1325, 1: 926, 2: 1399, 3: 45, 4: 1470, 5: 1233,
                   6: 1448, 7: 1445, 8: 1134, 9: 1062, 10: 1133,
                   11: 1460, 12: 231, 13: 273, 14: 104, 15: 1231, 16: 269}
-SESSION_TYPES = {0:"UNKNOWN",1:"P1",2:"P2",3:"P3",4:"SHORT QUALI",5:"QUALI",
-                 6:"S1",7:"S2",8:"S3",9:"SHORT SPRINT",10:"SPRINT",11:"RACE",
-                 12:"TIME TRIAL"}
+SESSION_TYPES = {0:"UNKNOWN",1:"PRACTICE 1",2:"PRACTICE 2",3:"PRACTICE 3",4:"SHORT PRACTICE",
+                 5:"QUALIFYING 1",6:"QUALIFYING 2",7:"QUALIFYING 3",8:"SHORT QUALIFYING",9:"ONE-SHOT QUALIFYING",
+                 10:"SPRINT SHOOTOUT 1",11:"SPRINT SHOOTOUT 2",12:"SPRINT SHOOTOUT 3",13:"SHORT SPRINT SHOOTOUT",
+                 14:"ONE-SHOT SPRINT SHOOTOUT",15:"RACE",16:"RACE 2",17:"RACE 3",18:"TIME TRIAL"}
 FLAG_NAMES = {-1:"--",0:"GREEN",1:"GREEN",2:"BLUE",3:"YELLOW"}
 
 lock = threading.RLock()
@@ -27,9 +28,9 @@ state = {"format":2026,"status":"WAITING FOR TELEMETRY","trackId":None,
          "trackName":None,"sessionName":None,"speed":None,"gear":None,"rpm":None,
          "rpmPercent":None,"throttle":None,"brake":None,"currentLapMs":None,
          "lastLapMs":None,"bestLapMs":None,"lap":None,"position":None,
-         "sectors":[None,None,None],"tyreTemps":[None,None,None,None],
+         "sectors":[None,None,None],"tyreTemps":[None,None,None,None],"tyrePressures":[None,None,None,None],
          "tyreWear":None,"compound":None,"ersPercent":None,"ersKj":None,
-         "ersMode":None,"harvestKw":None,"deployKw":None,"fuelKg":None,
+         "ersMode":None,"harvestKj":None,"deployKj":None,"fuelKg":None,
          "straightMode":"UNAVAILABLE","overtake":None,"safetyCar":None,
          "safetyDelta":None,"flag":"GREEN","mapReady":False,"updated":None}
 
@@ -66,6 +67,10 @@ def parse_packet(data):
             state["trackId"] = track_id if track_id >= 0 else None
             state["trackName"] = ("TRACK "+str(track_id)) if track_id >= 0 else None
             state["sessionName"] = SESSION_TYPES.get(session_type,"SESSION")
+            state["sessionGroup"] = ("PRACTICE" if 1 <= session_type <= 4 else
+                                     "QUALIFYING" if 5 <= session_type <= 14 else
+                                     "RACE" if 15 <= session_type <= 17 else
+                                     "TIME TRIAL" if session_type == 18 else "UNKNOWN")
             state["trackLength"] = track_length
             state["safetyCar"] = {0:None,1:"SAFETY CAR",2:"VSC",3:"FORMATION"}.get(safety)
         elif pid == 2:
@@ -90,6 +95,9 @@ def parse_packet(data):
             maxrpm=state.get("maxRpm")
             state["rpmPercent"]=min(100,state["rpm"]*100/maxrpm) if maxrpm else None
             state["tyreTemps"]=list(data[off+32:off+34])+list(data[off+30:off+32])
+            pressures = list(struct.unpack_from("<4f",data,off+39))
+            pressures = pressures[2:4] + pressures[0:2] # UDP wheel order RL, RR, FL, FR
+            state["tyrePressures"] = [finite(v) for v in pressures]
         elif pid == 7:
             off = HEADER + idx*59
             fuel=finite(struct.unpack_from("<f",data,off+5)[0])
@@ -111,6 +119,24 @@ def parse_packet(data):
             wear = list(struct.unpack_from("<4f",data,off))
             wear = wear[2:4] + wear[0:2] # UDP wheel order RL, RR, FL, FR
             state["tyreWear"] = [round(max(0,min(100,v)),1) for v in wear]
+        elif pid == 11:
+            # Session history contains completed official lap/sector times.
+            if data[HEADER] == idx:
+                count = min(data[HEADER+1],100)
+                best_lap_num = data[HEADER+3]
+                history = HEADER + 7
+                if 1 <= best_lap_num <= count:
+                    best_off = history + (best_lap_num-1)*14
+                    lap_ms = struct.unpack_from("<I",data,best_off)[0]
+                    flags = data[best_off+13]
+                    if lap_ms > 0 and flags & 1: state["bestLapMs"] = lap_ms
+                for lap_index in range(count-1,-1,-1):
+                    lap_off = history + lap_index*14
+                    valid = data[lap_off+13]
+                    if valid & 1:
+                        s3ms, s3min = struct.unpack_from("<HB",data,lap_off+10)
+                        state["sectors"][2] = s3ms + s3min*60000
+                        break
         elif pid == 14:
             # Personal best data set follows the session best data set.
             off = HEADER + 25
