@@ -18,7 +18,7 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate --spec ios/project.yml
       - name: Build unsigned iPhone app
-        run: xcodebuild -project FermaxoRacing.xcodeproj -scheme FermaxoRacing -sdk iphoneos -configuration Release -derivedDataPath build CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild -project ios/FermaxoRacing.xcodeproj -scheme FermaxoRacing -sdk iphoneos -configuration Release -derivedDataPath build CODE_SIGNING_ALLOWED=NO
       - name: Package IPA for free sideloading
         run: |
           mkdir -p Payload
