@@ -90,13 +90,13 @@ def parse_packet(data):
             state["tyreTemps"]=list(data[off+32:off+34])+list(data[off+30:off+32])
         elif pid == 7:
             off = HEADER + idx*59
-            state["fuelKg"]=round(struct.unpack_from("<f",data,off+5)[0],1)
+            fuel=finite(struct.unpack_from("<f",data,off+5)[0])\n            state["fuelKg"]=round(fuel,1) if fuel is not None else None
             state["maxRpm"]=struct.unpack_from("<H",data,off+17)[0]
             state["compound"]=str(data[off+26])
             flag=struct.unpack_from("<b",data,off+28)[0]
             state["flag"]=FLAG_NAMES.get(flag,"--")
             energy=struct.unpack_from("<f",data,off+37)[0]
-            state["ersKj"]=round(energy/1000,1) if energy >= 0 else None
+            state["ersKj"]=round(energy/1000,1) if finite(energy) is not None and energy >= 0 else None
             state["ersMode"]={0:"NONE",1:"MEDIUM",2:"HOTLAP",3:"BOOST"}.get(data[off+41],"--")
             state["harvestKw"]=round((struct.unpack_from("<f",data,off+42)[0]+struct.unpack_from("<f",data,off+46)[0])/1000,1)
             state["deployKw"]=round(struct.unpack_from("<f",data,off+54)[0]/1000,1)
@@ -135,7 +135,7 @@ def ws_frame(payload):
     return head+payload
 
 def broadcast(snapshot):
-    raw=ws_frame(json.dumps(snapshot,separators=(",",":")).encode())
+    raw=ws_frame(json.dumps(snapshot,separators=(",",":"),allow_nan=False).encode())
     with lock: targets=list(clients)
     for sock in targets:
         try: sock.sendall(raw)
