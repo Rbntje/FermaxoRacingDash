@@ -51,3 +51,16 @@ When `bridge.py` is running, the read-only API is available on the same LAN host
 - Existing `/ws` WebSocket endpoint continues to stream live snapshots.
 
 Use REST for polling and WebSocket for live updates. This API is served only by the running local bridge; it is not a cloud service. The native iPhone app receives PS5 UDP directly and does not require the Python bridge.
+
+
+## iPhone-hosted API
+
+The Fermaxo iPhone app starts a local HTTP API on port 8081. It serves the same telemetry snapshot displayed in the dashboard and runs on the iPhone itself, without Python or a cloud service.
+
+Open the app's connection settings for the iPhone API base URL, for example http://192.168.1.42:8081. Available read-only endpoints:
+
+- GET /api/telemetry — latest snapshot received from the PS5.
+- GET /api/health — telemetry receiver and API status.
+- GET /api/openapi.json — OpenAPI 3.1 endpoint description.
+
+The PS5, iPhone, and any device calling this API must be on the same Wi-Fi network. Keep Fermaxo open in the foreground while driving. The API is available only while the iPhone app is running.
