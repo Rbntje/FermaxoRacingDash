@@ -41,6 +41,8 @@ final class TelemetryReceiver: ObservableObject {
         stop()
         guard let nwPort = NWEndpoint.Port(rawValue: newPort) else { return }
         port = newPort
+        status = "WAITING FOR PS5"
+        snapshot["status"] = "WAITING FOR PS5"
         localIPv4 = Self.wifiIPv4()
         do {
             let listener = try NWListener(using: .udp, on: nwPort)
@@ -88,7 +90,6 @@ final class TelemetryReceiver: ObservableObject {
                     if self.decode(data) {
                         self.lastPacket = Date()
                         self.snapshot["status"] = "LIVE"
-                        self.status = "LIVE"
                         self.publish()
                     }
                 }
@@ -129,7 +130,7 @@ final class TelemetryReceiver: ObservableObject {
             let off = 29 + car * 57
             snapshot["lastLapMs"] = nonzero(Double(u32(data, off)))
             snapshot["currentLapMs"] = nonzero(Double(u32(data, off + 4)))
-            let s1 = Double(u16(data, off + 8) + UInt32(data[off + 10]) * 60000)
+            let s1 = Double(u16(data, off + 8)) + Double(data[off + 10]) * 60000
             let s2 = Double(u16(data, off + 11)) + Double(data[off + 13]) * 60000
             snapshot["sectors"] = [s1 > 0 ? s1 as Any : NSNull(), s2 > 0 ? s2 as Any : NSNull(), (snapshot["sectors"] as? [Any])?[2] ?? NSNull()]
             snapshot["safetyDelta"] = finite(f32(data, off + 28)) as Any? ?? NSNull()
@@ -227,7 +228,11 @@ final class TelemetryReceiver: ObservableObject {
 
     private func publish() {
         let current = snapshot
-        DispatchQueue.main.async { [weak self] in self?.onSnapshot?(current) }
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.status = current["status"] as? String ?? "WAITING FOR PS5"
+            self.onSnapshot?(current)
+        }
     }
 
     private func u16(_ d: Data, _ o: Int) -> UInt16 { UInt16(d[o]) | UInt16(d[o + 1]) << 8 }
