@@ -92,7 +92,8 @@ def parse_packet(data):
             state["tyreTemps"]=list(data[off+32:off+34])+list(data[off+30:off+32])
         elif pid == 7:
             off = HEADER + idx*59
-            fuel=finite(struct.unpack_from("<f",data,off+5)[0])\n            state["fuelKg"]=round(fuel,1) if fuel is not None else None
+            fuel=finite(struct.unpack_from("<f",data,off+5)[0])
+            state["fuelKg"]=round(fuel,1) if fuel is not None else None
             state["maxRpm"]=struct.unpack_from("<H",data,off+17)[0]
             state["compound"]=str(data[off+26])
             flag=struct.unpack_from("<b",data,off+28)[0]
