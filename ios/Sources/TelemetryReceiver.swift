@@ -14,6 +14,7 @@ final class TelemetryReceiver: ObservableObject {
     var onSnapshot: (([String: Any]) -> Void)?
 
     private let queue = DispatchQueue(label: "com.fermaxo.udp")
+    private let snapshotLock = NSRecursiveLock()
     private var listener: NWListener?
     private var apiServer: TelemetryAPIServer?
     private var snapshot: [String: Any] = [
@@ -46,7 +47,9 @@ final class TelemetryReceiver: ObservableObject {
         guard let nwPort = NWEndpoint.Port(rawValue: newPort) else { return }
         port = newPort
         status = "WAITING FOR PS5"
+        snapshotLock.lock()
         snapshot["status"] = "WAITING FOR PS5"
+        snapshotLock.unlock()
         localIPv4 = Self.wifiIPv4()
         startAPIServer()
         do {
@@ -92,7 +95,9 @@ final class TelemetryReceiver: ObservableObject {
     private func startAPIServer() {
         let server = TelemetryAPIServer(port: apiPort) { [weak self] in
             guard let self else { return [:] }
-            return self.queue.sync { self.snapshot }
+            self.snapshotLock.lock()
+            defer { self.snapshotLock.unlock() }
+            return self.snapshot
         }
         server.onStatus = { [weak self] status in self?.apiStatus = status }
         apiServer = server
@@ -123,6 +128,8 @@ final class TelemetryReceiver: ObservableObject {
         let car = Int(data[28])
         guard car < 24 else { return false }
         if pid == 0 || pid == 13 { return false }
+        snapshotLock.lock()
+        defer { snapshotLock.unlock() }
         let uid = u64(data, 8)
         if sessionUID != uid {
             sessionUID = uid
@@ -240,12 +247,16 @@ final class TelemetryReceiver: ObservableObject {
     }
 
     private func publishStatus(_ newStatus: String) {
+        snapshotLock.lock()
         snapshot["status"] = newStatus
+        snapshotLock.unlock()
         publish()
     }
 
     private func publish() {
+        snapshotLock.lock()
         let current = snapshot
+        snapshotLock.unlock()
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.status = current["status"] as? String ?? "WAITING FOR PS5"
