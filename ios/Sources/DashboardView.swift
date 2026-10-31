@@ -76,6 +76,11 @@ private struct ReceiverSettingsView: View {
             Form {
                 Section("PlayStation connection") {
                     LabeledContent("iPhone IP", value: receiver.localIPv4 ?? "Connect to Wi-Fi")
+                    LabeledContent("Fermaxo API", value: receiver.apiBaseURL ?? "Waiting for Wi-Fi")
+                    Text("GET /api/telemetry · /api/health · /api/openapi.json")
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                    LabeledContent("API server", value: receiver.apiStatus)
                     TextField("UDP port", text: $portText)
                         .keyboardType(.numberPad)
                     LabeledContent("Receiver", value: receiver.status)
