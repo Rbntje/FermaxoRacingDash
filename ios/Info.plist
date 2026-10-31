@@ -9,7 +9,7 @@
   <key>CFBundleShortVersionString</key><string>1.0</string>
   <key>CFBundleVersion</key><string>1</string>
   <key>LSRequiresIPhoneOS</key><true/>
-  <key>NSLocalNetworkUsageDescription</key><string>Fermaxo receives live F1 telemetry directly from your PlayStation on your home Wi-Fi.</string>
+  <key>NSLocalNetworkUsageDescription</key><string>Fermaxo receives live F1 telemetry from your PlayStation and serves a local read-only API on your home Wi-Fi.</string>
   <key>UIApplicationSupportsIndirectInputEvents</key><true/>
   <key>UIUserInterfaceStyle</key><string>Dark</string>
   <key>UISupportedInterfaceOrientations</key>
