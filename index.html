@@ -2,39 +2,56 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#080d12"><title>Fermaxo Racing · Telemetry</title><link rel="stylesheet" href="style.css">
+<meta name="theme-color" content="#000000"><title>Fermaxo Racing · Telemetry</title><link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="dash" aria-label="Fermaxo Racing telemetry display">
-  <header class="top"><div class="brand"><i class="mark">F</i><span>FERMAXO <b>RACING</b></span></div><div class="session"><span class="live-dot"></span><span id="connection">WAITING FOR TELEMETRY</span><span class="sep">/</span><span id="track">TRACK --</span><span class="sep">/</span><span id="session">SESSION --</span></div><button id="connect" class="connect">CONNECT</button><button id="fullscreen" class="icon-btn" aria-label="Fullscreen">⛶</button></header>
-  <section id="warning" class="warning hidden"><strong id="warningText"></strong><span id="warningDetail"></span></section>
-  <div class="layout">
-    <section class="drive panel">
-      <div class="eyebrow">LIVE TELEMETRY <span id="lapNo">LAP --</span></div>
-      <div class="speedline"><div><small>SPEED</small><strong id="speed">--</strong><em>KM/H</em></div><div class="gear"><small>GEAR</small><strong id="gear">--</strong></div><div class="lapclock"><small>LAP TIME</small><strong id="lapTime">--:--.---</strong></div></div>
-      <div class="rpm"><div class="lights" id="lights"></div><div class="rpm-label"><span>RPM</span><b id="rpm">--</b></div></div>
-      <div class="pedals"><div><span>THROTTLE</span><div class="track"><i id="throttleBar"></i></div><b id="throttle">--%</b></div><div><span>BRAKE</span><div class="track brake"><i id="brakeBar"></i></div><b id="brake">--%</b></div></div>
-      <div class="aero"><span>STRAIGHT MODE</span><b id="aero">UNAVAILABLE</b><span class="mode-note">ACTIVE AERO · <i id="overtake">--</i></span></div>
+<main class="dash" aria-label="Fermaxo Racing F1 telemetry display">
+<header class="top">
+  <div class="brand"><i class="mark">F</i><span>FERMAXO <b>RACING</b></span></div>
+  <div class="session"><span class="live-dot"></span><span id="connection">WAITING FOR TELEMETRY</span><i></i><span id="track">TRACK --</span><i></i><span id="session">SESSION --</span></div>
+  <button id="connect" class="connect">CONNECT</button><button id="fullscreen" class="icon-btn" aria-label="Fullscreen">⛶</button>
+</header>
+<section id="event-alert" class="event-alert hidden" aria-live="assertive"><strong id="alertTitle">--</strong><span id="alertMeaning">--</span></section>
+<div class="layout">
+  <section class="tyres section">
+    <div class="section-title">TYRE CONDITION <span id="compound">COMPOUND --</span></div>
+    <div class="tyre-grid">
+      <article class="tyre-block" id="tyreBlock0"><header>FRONT LEFT <b>FL</b></header><strong id="t0">--°</strong><div class="temp-bar"><i id="tc0"></i></div><footer><span>WEAR <b id="w0">--%</b></span><span>PRESSURE <b id="p0">-- PSI</b></span></footer></article>
+      <article class="tyre-block" id="tyreBlock1"><header>FRONT RIGHT <b>FR</b></header><strong id="t1">--°</strong><div class="temp-bar"><i id="tc1"></i></div><footer><span>WEAR <b id="w1">--%</b></span><span>PRESSURE <b id="p1">-- PSI</b></span></footer></article>
+      <article class="tyre-block" id="tyreBlock2"><header>REAR LEFT <b>RL</b></header><strong id="t2">--°</strong><div class="temp-bar"><i id="tc2"></i></div><footer><span>WEAR <b id="w2">--%</b></span><span>PRESSURE <b id="p2">-- PSI</b></span></footer></article>
+      <article class="tyre-block" id="tyreBlock3"><header>REAR RIGHT <b>RR</b></header><strong id="t3">--°</strong><div class="temp-bar"><i id="tc3"></i></div><footer><span>WEAR <b id="w3">--%</b></span><span>PRESSURE <b id="p3">-- PSI</b></span></footer></article>
+    </div>
+    <section id="performance" class="performance hidden">
+      <div class="section-title">CIRCUIT PERFORMANCE <span id="mapStatus">TRACK MAP CALIBRATING</span></div>
+      <div id="trackmap" class="trackmap"><span>TRACK MAP CALIBRATING</span></div>
+      <footer class="mapfoot"><span>POSITION <b id="position">--</b></span><span>MINI-SECTOR <b id="miniDelta">--</b></span></footer>
     </section>
-    <section class="car panel"><div class="eyebrow">FERMAXO // F26 <span>TYRE STATUS</span></div>
-      <div class="carstage">
-       <div class="tyre tyre-fl"><small>FL</small><b id="t0">--°</b><i id="tc0"></i></div><div class="tyre tyre-fr"><small>FR</small><b id="t1">--°</b><i id="tc1"></i></div>
-       <svg class="car-svg" viewBox="0 0 180 430" role="img" aria-label="Original Fermaxo F1 car top view">
-        <defs><linearGradient id="body" x2="1"><stop stop-color="#00c8d8"/><stop offset=".46" stop-color="#142935"/><stop offset="1" stop-color="#e52b38"/></linearGradient></defs>
-        <path class="wing" d="M27 57h126l10 14H17zM20 367h140l12 23H8z"/>
-        <path class="carbody" d="M77 25h26l7 26 15 41-4 48 18 43-6 87-18 54-5 46H70l-5-46-18-54-6-87 18-43-4-48 15-41z"/>
-        <path class="stripe" d="M85 25h10v104h-10zm-4 160h18v123H81z"/>
-        <path class="cockpit" d="M73 144q17-17 34 0l8 48q-25 23-50 0z"/><path class="halo" d="M68 162q22-20 44 0M90 145v52"/>
-        <path class="sidepod" d="M43 192l23 12-3 72-20 10zm94 0-23 12 3 72 20 10z"/>
-        <path class="detail" d="M68 306h44M72 320h36M63 94h54"/>
-       </svg>
-       <div class="tyre tyre-rl"><small>RL</small><b id="t2">--°</b><i id="tc2"></i></div><div class="tyre tyre-rr"><small>RR</small><b id="t3">--°</b><i id="tc3"></i></div>
-      </div>
-      <div class="tyre-foot"><span>COMPOUND <b id="compound">--</b></span><span>TYRE WEAR <b id="wear">--</b></span></div>
-    </section>
-    <section class="energy panel"><div class="eyebrow">ENERGY STORE <span>ERS</span></div><div class="battery-head"><strong id="ersPct">--<small>%</small></strong><span id="ersMode">NO DATA</span></div><div class="battery"><i id="ersBar"></i></div><div class="energy-kj"><span>STORED <b id="ersKj">-- kJ</b></span><span>HARVEST / DEPLOY PER LAP <b id="ersFlow">-- / -- kW</b></span></div><div class="fuel"><span>FUEL REMAINING</span><b id="fuel">-- kg</b></div></section>
-    <section class="map panel"><div class="eyebrow">CIRCUIT PERFORMANCE <span id="mapStatus">TRACK MAP CALIBRATING</span></div><div class="trackmap"><svg viewBox="0 0 500 260" preserveAspectRatio="xMidYMid meet" aria-label="Circuit map unavailable until a valid lap is recorded"><text x="250" y="132" text-anchor="middle">NO VERIFIED MAP</text><text x="250" y="158" text-anchor="middle" class="sub">A real lap is required to calibrate this circuit</text></svg></div><div class="mapfoot"><span>POSITION <b id="position">--</b></span><span>MINI-SECTOR DELTA <b>--</b></span><span>REFERENCE <b>--</b></span></div></section>
-    <section class="timing panel"><div class="eyebrow">LAP / SECTORS <span>SESSION DATA</span></div><div class="timingrow"><span>BEST LAP</span><b id="best">--:--.---</b></div><div class="timingrow"><span>PREVIOUS</span><b id="previous">--:--.---</b></div><div class="sectors"><div>S1 <b id="s1">--:--.---</b></div><div>S2 <b id="s2">--:--.---</b></div><div>S3 <b id="s3">--:--.---</b></div></div><div class="raceflags"><span id="flag">GREEN</span><span id="sc">SC --</span></div></section>
-  </div>
-  <footer><span>F1 25 · 2026 SEASON PACK</span><span id="stamp">--</span><span>LIVE VALUES FROM GAME UDP</span></footer>
+  </section>
+  <section class="center section" aria-label="Driving display">
+    <div class="center-top"><span id="lapNo">LAP --</span><span id="lapTime">--:--.---</span></div>
+    <div class="gear-label">GEAR</div><strong class="gear" id="gear">--</strong>
+    <div class="speed"><strong id="speed">--</strong><span>KM/H</span></div>
+    <div id="lapDelta" class="lap-delta hidden"><span id="deltaLabel">LAP DELTA</span><b id="deltaValue">--</b></div>
+    <div class="center-hint">FERMAXO <b>RACING</b> · F1 26</div>
+  </section>
+  <section class="right section">
+    <div class="section-title">RACE / TELEMETRY <span id="positionLabel">POS --</span></div>
+    <div class="rpm-block"><div class="rpm-heading"><span>RPM</span><b id="rpm">--</b></div><div class="lights" id="lights"></div></div>
+    <div class="pedals">
+      <div><span>THROTTLE</span><div class="track"><i id="throttleBar"></i></div><b id="throttle">--%</b></div>
+      <div><span>BRAKE</span><div class="track brake"><i id="brakeBar"></i></div><b id="brake">--%</b></div>
+    </div>
+    <div class="aero"><span>STRAIGHT MODE</span><b id="aero">UNAVAILABLE</b><span>OVERTAKE <i id="overtake">--</i></span></div>
+    <div class="timing">
+      <div class="timing-head"><span>PREVIOUS <b id="previous">--:--.---</b></span><span>BEST <b id="best">--:--.---</b></span></div>
+      <div class="sectors"><span>S1 <b id="s1">--:--.---</b></span><span>S2 <b id="s2">--:--.---</b></span><span>S3 <b id="s3">--:--.---</b></span></div>
+    </div>
+    <div id="statusBlock" class="status-block flag-green"><div><small>RACE STATUS</small><strong id="flag">GREEN</strong></div><div class="status-detail"><span id="sc">--</span><b id="statusDelta" class="hidden">--</b></div></div>
+  </section>
+</div>
+<section class="energy section" aria-label="Energy recovery system">
+  <div class="energy-label"><span>ERS ENERGY</span><strong id="ersPct">--<small>%</small></strong><i id="ersMode">NO DATA</i></div>
+  <div class="battery-wrap"><div class="battery"><i id="ersBar"></i></div><div class="battery-foot"><span>STORED <b id="ersKj">-- kJ</b></span><span>HARVESTED <b id="harvest">-- kJ/LAP</b></span><span>DEPLOYED <b id="deploy">-- kJ/LAP</b></span><span>FUEL <b id="fuel">-- kg</b></span></div></div>
+</section>
+<footer class="foot"><span>F1 25 · 2026 SEASON PACK</span><span id="stamp">--</span><button id="fullscreen-small" aria-label="Fullscreen">FULLSCREEN</button></footer>
 </main><script src="app.js"></script></body></html>
