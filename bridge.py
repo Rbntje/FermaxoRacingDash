@@ -75,9 +75,9 @@ def parse_packet(data):
             s1ms, s1min = struct.unpack_from("<HB",data,off+8)
             s2ms, s2min = struct.unpack_from("<HB",data,off+11)
             state["sectors"]=[s1ms+s1min*60000,s2ms+s2min*60000,None]
-            state["safetyDelta"] = finite(struct.unpack_from("<f",data,off+32)[0])
-            state["position"]=data[off+36] or None
-            state["lap"]=data[off+37] or None
+            state["safetyDelta"] = finite(struct.unpack_from("<f",data,off+28)[0])
+            state["position"]=data[off+32] or None
+            state["lap"]=data[off+33] or None
         elif pid == 6:
             off = HEADER + idx*59
             state["speed"]=struct.unpack_from("<H",data,off)[0]
