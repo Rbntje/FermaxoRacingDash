@@ -19,3 +19,5 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 
 .condition{font-size:7px;font-weight:800;letter-spacing:.8px;color:#9eabb0;text-transform:uppercase}.tyre-block.condition-cold{border-left-color:var(--blue)}.tyre-block.condition-optimal{border-left-color:var(--green)}.tyre-block.condition-warm{border-left-color:var(--amber)}.tyre-block.condition-hot{border-left-color:var(--red)}
+
+.flag-unknown{border-color:#536168;background:#07090a}.flag-unknown strong{color:#9aa8ae}
