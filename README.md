@@ -47,6 +47,7 @@ When `bridge.py` is running, the read-only API is available on the same LAN host
 
 - `GET http://<PC-IP>:8080/api/telemetry` — latest parsed F1 telemetry as JSON.
 - `GET http://<PC-IP>:8080/api/health` — bridge status, last update time, and UDP port.
+- `GET http://<PC-IP>:8080/api/openapi.json` — OpenAPI 3.1 description for both REST endpoints.
 - Existing `/ws` WebSocket endpoint continues to stream live snapshots.
 
 Use REST for polling and WebSocket for live updates. This API is served only by the running local bridge; it is not a cloud service. The native iPhone app receives PS5 UDP directly and does not require the Python bridge.
