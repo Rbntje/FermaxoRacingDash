@@ -20,7 +20,7 @@ SESSION_TYPES = {0:"UNKNOWN",1:"PRACTICE 1",2:"PRACTICE 2",3:"PRACTICE 3",4:"SHO
                  5:"QUALIFYING 1",6:"QUALIFYING 2",7:"QUALIFYING 3",8:"SHORT QUALIFYING",9:"ONE-SHOT QUALIFYING",
                  10:"SPRINT SHOOTOUT 1",11:"SPRINT SHOOTOUT 2",12:"SPRINT SHOOTOUT 3",13:"SHORT SPRINT SHOOTOUT",
                  14:"ONE-SHOT SPRINT SHOOTOUT",15:"RACE",16:"RACE 2",17:"RACE 3",18:"TIME TRIAL"}
-FLAG_NAMES = {-1:"--",0:"GREEN",1:"GREEN",2:"BLUE",3:"YELLOW"}
+FLAG_NAMES = {-1:"--",0:"--",1:"GREEN",2:"BLUE",3:"YELLOW"}
 
 lock = threading.RLock()
 clients = set()
@@ -32,7 +32,7 @@ state = {"format":2026,"status":"WAITING FOR TELEMETRY","trackId":None,
          "tyreWear":None,"compound":None,"ersPercent":None,"ersKj":None,
          "ersMode":None,"harvestKj":None,"deployKj":None,"fuelKg":None,
          "straightMode":"UNAVAILABLE","overtake":None,"safetyCar":None,
-         "safetyDelta":None,"flag":"GREEN","mapReady":False,"updated":None}
+         "safetyDelta":None,"flag":"--","mapReady":False,"updated":None}
 
 def parse_header(data):
     if len(data) < HEADER: return None
