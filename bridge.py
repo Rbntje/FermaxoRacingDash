@@ -87,7 +87,7 @@ def parse_packet(data):
             state["rpm"]=struct.unpack_from("<H",data,off+16)[0]
             maxrpm=state.get("maxRpm")
             state["rpmPercent"]=min(100,state["rpm"]*100/maxrpm) if maxrpm else None
-            state["tyreTemps"]=list(data[off+30:off+34])
+            state["tyreTemps"]=list(data[off+32:off+34])+list(data[off+30:off+32])
         elif pid == 7:
             off = HEADER + idx*59
             state["fuelKg"]=round(struct.unpack_from("<f",data,off+5)[0],1)
