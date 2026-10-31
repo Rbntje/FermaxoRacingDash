@@ -29,3 +29,13 @@ EA's official page links the version 11.0 2026 Season Pack structures. The parse
 ## GitHub Pages
 
 index.html is a static fallback. GitHub Pages cannot receive game UDP packets; live telemetry requires the local bridge. A hosted HTTPS page cannot connect to this local HTTP WebSocket without browser mixed-content restrictions, so use the bridge-served page for live driving.
+ 
+
+## iPhone app (free sideload build)
+
+The iPhone target receives format-2026 UDP directly from the PlayStation on the same Wi-Fi and renders the bundled Fermaxo dashboard. No PC service or cloud host is needed while driving. Keep Fermaxo open in the foreground so iOS does not suspend its UDP listener.
+
+A macOS GitHub Actions runner builds an unsigned IPA. In GitHub, open **Actions → Build Fermaxo iPhone app → Run workflow**, then download the **FermaxoRacing-unsigned-ipa** artifact. Install it using AltStore on Windows with your free Apple Account. Free Apple provisioning expires after seven days, so AltStore/AltServer must refresh the app regularly. The PC is only for installing or refreshing the app; telemetry goes directly from PS5 to iPhone.
+
+On iPhone, allow Local Network access when prompted. Open Fermaxo's connection settings to see the iPhone IP, then set F1 25 UDP Telemetry On, Broadcast Off, the displayed IP/port, 20 Hz, and UDP Format 2026. The PS5 and iPhone must stay on the same Wi-Fi network.
+

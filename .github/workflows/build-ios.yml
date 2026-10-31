@@ -1,0 +1,31 @@
+name: Build Fermaxo iPhone app
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "ios/**"
+      - "index.html"
+      - "style.css"
+      - "app.js"
+      - ".github/workflows/build-ios.yml"
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate --spec ios/project.yml
+      - name: Build unsigned iPhone app
+        run: xcodebuild -project FermaxoRacing.xcodeproj -scheme FermaxoRacing -sdk iphoneos -configuration Release -derivedDataPath build CODE_SIGNING_ALLOWED=NO
+      - name: Package IPA for free sideloading
+        run: |
+          mkdir -p Payload
+          cp -R "build/Build/Products/Release-iphoneos/Fermaxo Racing.app" Payload/
+          zip -qr FermaxoRacing-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FermaxoRacing-unsigned-ipa
+          path: FermaxoRacing-unsigned.ipa
+          if-no-files-found: error

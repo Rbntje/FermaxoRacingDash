@@ -23,4 +23,13 @@ if(state.lastStatus!==null&&state.lastStatus!==fi.k)notifyStatus(fi.k,fi.meaning
 const performanceAllowed=p.sessionGroup==="PRACTICE"||p.sessionGroup==="QUALIFYING";$("performance").classList.toggle("hidden",!performanceAllowed);if(performanceAllowed){if(p.mapReady===true){set("mapStatus","CALIBRATED");if(p.mapSvg)$("trackmap").innerHTML=p.mapSvg}else{set("mapStatus","TRACK MAP CALIBRATING");$("trackmap").textContent="TRACK MAP CALIBRATING"}}set("position",p.position??"--");set("miniDelta",Number.isFinite(p.miniSectorDelta)?((p.miniSectorDelta>0?"+":"")+p.miniSectorDelta.toFixed(3)+"s"):"--");
 const lapDelta=$("lapDelta");if(performanceAllowed&&p.referenceValid===true&&Number.isFinite(p.lapDelta)){lapDelta.classList.remove("hidden");set("deltaLabel",p.sessionGroup==="QUALIFYING"?"DELTA TO REFERENCE":"LAP DELTA");set("deltaValue",(p.lapDelta>0?"+":"")+p.lapDelta.toFixed(3)+"s");$("deltaValue").style.color=p.lapDelta<=0?"var(--green)":"var(--red)"}else lapDelta.classList.add("hidden");
 set("stamp",new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"}))}
-connect();setInterval(()=>{if(state.last&&Date.now()-state.last>2500)set("connection","CONNECTION LOST")},800);
+window.FermaxoRender=render;
+if(window.FERMAXO_NATIVE){
+  $("connect").hidden=true;
+  $("fullscreen").hidden=true;
+  $("fullscreen-small").hidden=true;
+  set("connection","WAITING FOR PS5");
+}else{
+  connect();
+  setInterval(()=>{if(state.last&&Date.now()-state.last>2500)set("connection","CONNECTION LOST")},800);
+}
