@@ -81,8 +81,10 @@ def parse_packet(data):
         elif pid == 6:
             off = HEADER + idx*59
             state["speed"]=struct.unpack_from("<H",data,off)[0]
-            state["throttle"]=round(struct.unpack_from("<f",data,off+2)[0]*100)
-            state["brake"]=round(struct.unpack_from("<f",data,off+10)[0]*100)
+            throttle=finite(struct.unpack_from("<f",data,off+2)[0])
+            brake=finite(struct.unpack_from("<f",data,off+10)[0])
+            state["throttle"]=round(max(0,min(1,throttle))*100) if throttle is not None else None
+            state["brake"]=round(max(0,min(1,brake))*100) if brake is not None else None
             state["gear"]=struct.unpack_from("<b",data,off+15)[0]
             state["rpm"]=struct.unpack_from("<H",data,off+16)[0]
             maxrpm=state.get("maxRpm")
@@ -98,15 +100,19 @@ def parse_packet(data):
             energy=struct.unpack_from("<f",data,off+37)[0]
             state["ersKj"]=round(energy/1000,1) if finite(energy) is not None and energy >= 0 else None
             state["ersMode"]={0:"NONE",1:"MEDIUM",2:"HOTLAP",3:"BOOST"}.get(data[off+41],"--")
-            state["harvestKw"]=round((struct.unpack_from("<f",data,off+42)[0]+struct.unpack_from("<f",data,off+46)[0])/1000,1)
-            state["deployKw"]=round(struct.unpack_from("<f",data,off+54)[0]/1000,1)
+            harvest=finite(struct.unpack_from("<f",data,off+42)[0])
+            harvest_h=finite(struct.unpack_from("<f",data,off+46)[0])
+            deployed=finite(struct.unpack_from("<f",data,off+54)[0])
+            state["harvestKj"]=round((harvest+harvest_h)/1000,1) if harvest is not None and harvest_h is not None else None
+            state["deployKj"]=round(deployed/1000,1) if deployed is not None else None
         elif pid == 10:
             off = HEADER + idx*46
             wear = list(struct.unpack_from("<4f",data,off))
+            wear = wear[2:4] + wear[0:2] # UDP wheel order RL, RR, FL, FR
             state["tyreWear"] = [round(max(0,min(100,v)),1) for v in wear]
         elif pid == 14:
-            # Time-trial first data set is the current session best.
-            off = HEADER
+            # Personal best data set follows the session best data set.
+            off = HEADER + 25
             valid = data[off+24]
             lap_ms = struct.unpack_from("<I",data,off+3)[0]
             if valid == 1 and lap_ms > 0: state["bestLapMs"] = lap_ms
