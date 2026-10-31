@@ -51,6 +51,7 @@ def parse_packet(data):
     if not h or h["format"] != 2026 or h["pid"] not in PACKET_LENGTHS: return None
     if len(data) != PACKET_LENGTHS[h["pid"]]: return None
     pid, idx = h["pid"], h["player"]
+    if idx >= CARS: return None
     if pid in (0,13): return None
     with lock:
         if state.get("sessionUid") != h["uid"]:
@@ -58,10 +59,10 @@ def parse_packet(data):
                          mapReady=False,bestLapMs=None)
         if pid == 1:
             # session packet fixed fields before marshal-zone array
-            track_length = struct.unpack_from("<H",data,34)[0]
-            session_type = data[36]
-            track_id = struct.unpack_from("<b",data,37)[0]
-            safety = data[HEADER+110] # safety-car status after 21 marshal zones
+            track_length = struct.unpack_from("<H",data,33)[0]
+            session_type = data[35]
+            track_id = struct.unpack_from("<b",data,36)[0]
+            safety = data[HEADER+125] # after fixed fields and 21 five-byte marshal zones
             state["trackId"] = track_id if track_id >= 0 else None
             state["trackName"] = ("TRACK "+str(track_id)) if track_id >= 0 else None
             state["sessionName"] = SESSION_TYPES.get(session_type,"SESSION")
@@ -99,10 +100,31 @@ def parse_packet(data):
             state["ersMode"]={0:"NONE",1:"MEDIUM",2:"HOTLAP",3:"BOOST"}.get(data[off+41],"--")
             state["harvestKw"]=round((struct.unpack_from("<f",data,off+42)[0]+struct.unpack_from("<f",data,off+46)[0])/1000,1)
             state["deployKw"]=round(struct.unpack_from("<f",data,off+54)[0]/1000,1)
+        elif pid == 10:
+            off = HEADER + idx*46
+            wear = list(struct.unpack_from("<4f",data,off))
+            state["tyreWear"] = [round(max(0,min(100,v)),1) for v in wear]
+        elif pid == 14:
+            # Time-trial first data set is the current session best.
+            off = HEADER
+            valid = data[off+24]
+            lap_ms = struct.unpack_from("<I",data,off+3)[0]
+            if valid == 1 and lap_ms > 0: state["bestLapMs"] = lap_ms
         elif pid == 16:
-            # Format/length is validated. EA's active aero/overtake fields are
-            # surfaced only after their exact v11 layout is implemented.
-            pass
+            off = HEADER + idx*10
+            mode, available = data[off], data[off+1]
+            distance = struct.unpack_from("<H",data,off+2)[0]
+            overtake_available, overtake_active = data[off+4], data[off+5]
+            overtake_distance = struct.unpack_from("<H",data,off+6)[0]
+            state["straightMode"] = ("STRAIGHT" if mode == 1 else "CORNER") if available else "UNAVAILABLE"
+            state["aeroDistance"] = distance if distance else None
+            state["overtake"] = ("ACTIVE" if overtake_active else "AVAILABLE") if overtake_active or overtake_available else "UNAVAILABLE"
+            state["overtakeDistance"] = overtake_distance if overtake_distance else None
+        elif pid == 3:
+            code = data[HEADER:HEADER+4].decode("ascii","ignore")
+            if code == "RDFL": state["flag"] = "RED"
+            elif code == "CHQF": state["flag"] = "CHEQUERED"
+            elif code in ("SSTA","SEND"): state["flag"] = "GREEN"
         state["status"]="LIVE"
         state["updated"]=time.time()
         return dict(state)
