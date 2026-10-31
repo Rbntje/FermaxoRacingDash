@@ -208,6 +208,28 @@ class Handler(BaseHTTPRequestHandler):
                 updated=state.get("updated")
             return self._json({"ok":True,"telemetry":"live" if live else "waiting",
                                "updated":updated,"udpPort":UDP_PORT})
+        if self.path=="/api/openapi.json":
+            return self._json({
+                "openapi":"3.1.0",
+                "info":{"title":"Fermaxo Racing Telemetry API","version":"1.0.0"},
+                "servers":[{"url":"/"}],
+                "paths":{
+                    "/api/telemetry":{"get":{"summary":"Latest parsed F1 telemetry",
+                        "responses":{"200":{"description":"Latest telemetry snapshot",
+                        "content":{"application/json":{"schema":{"type":"object",
+                        "properties":{"format":{"type":"integer","example":2026},
+                        "status":{"type":"string","example":"LIVE"},
+                        "speed":{"type":["integer","null"]},"gear":{"type":["integer","null"]},
+                        "rpm":{"type":["integer","null"]},"position":{"type":["integer","null"]},
+                        "sessionGroup":{"type":"string"},"sectors":{"type":"array",
+                        "items":{"type":["number","null"]}}}}}}}}}},
+                    "/api/health":{"get":{"summary":"Bridge and UDP receiver health",
+                        "responses":{"200":{"description":"Bridge health status",
+                        "content":{"application/json":{"schema":{"type":"object",
+                        "properties":{"ok":{"type":"boolean"},"telemetry":{"type":"string"},
+                        "updated":{"type":["number","null"]},"udpPort":{"type":"integer"}}}}}}}}}
+                }
+            })
         if self.path=="/ws":
             key=self.headers.get("Sec-WebSocket-Key")
             if not key or self.headers.get("Upgrade","").lower()!="websocket":
