@@ -180,7 +180,34 @@ def broadcast(snapshot):
 class Handler(BaseHTTPRequestHandler):
     protocol_version="HTTP/1.1"
     def log_message(self,*args): pass
+    def _json(self, payload, status=200):
+        body=json.dumps(payload,separators=(",",":"),allow_nan=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type","application/json; charset=utf-8")
+        self.send_header("Content-Length",str(len(body)))
+        self.send_header("Cache-Control","no-store")
+        self.send_header("Access-Control-Allow-Origin","*")
+        self.send_header("Access-Control-Allow-Methods","GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers","Content-Type")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        if self.path.startswith("/api/"):
+            self._json({"ok":True})
+        else:
+            self.send_error(404)
+
     def do_GET(self):
+        if self.path=="/api/telemetry":
+            with lock: current=dict(state)
+            return self._json(current)
+        if self.path=="/api/health":
+            with lock:
+                live=state.get("status")=="LIVE"
+                updated=state.get("updated")
+            return self._json({"ok":True,"telemetry":"live" if live else "waiting",
+                               "updated":updated,"udpPort":UDP_PORT})
         if self.path=="/ws":
             key=self.headers.get("Sec-WebSocket-Key")
             if not key or self.headers.get("Upgrade","").lower()!="websocket":
