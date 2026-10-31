@@ -35,7 +35,7 @@ index.html is a static fallback. GitHub Pages cannot receive game UDP packets; l
 
 The iPhone target receives format-2026 UDP directly from the PlayStation on the same Wi-Fi and renders the bundled Fermaxo dashboard. No PC service or cloud host is needed while driving. Keep Fermaxo open in the foreground so iOS does not suspend its UDP listener.
 
-A macOS GitHub Actions runner builds an unsigned IPA. In GitHub, open **Actions → Build Fermaxo iPhone app → Run workflow**, then download the **FermaxoRacing-unsigned-ipa** artifact. Install it using AltStore on Windows with your free Apple Account. Free Apple provisioning expires after seven days, so AltStore/AltServer must refresh the app regularly. The PC is only for installing or refreshing the app; telemetry goes directly from PS5 to iPhone.
+A macOS GitHub Actions runner also builds an unsigned IPA for AltStore. For Apple Configurator, use the signed local Xcode route below; Configurator cannot install the unsigned Actions artifact.
 
 On iPhone, allow Local Network access when prompted. Open Fermaxo's connection settings to see the iPhone IP, then set F1 25 UDP Telemetry On, Broadcast Off, the displayed IP/port, 20 Hz, and UDP Format 2026. The PS5 and iPhone must stay on the same Wi-Fi network.
 
@@ -64,3 +64,16 @@ Open the app's connection settings for the iPhone API base URL, for example http
 - GET /api/openapi.json — OpenAPI 3.1 endpoint description.
 
 The PS5, iPhone, and any device calling this API must be on the same Wi-Fi network. Keep Fermaxo open in the foreground while driving. The API is available only while the iPhone app is running.
+
+
+### Install through Apple Configurator (signed with your Apple Account)
+
+Apple Configurator requires a signed app. The GitHub Actions IPA is deliberately unsigned; it cannot be installed directly with Configurator. Create a free Personal Team signing profile on your Mac with Xcode, then package that signed app:
+
+1. On the Mac, install Xcode and XcodeGen, download this repository, and run `xcodegen generate --spec ios/project.yml` from the repository folder.
+2. Open `ios/FermaxoRacing.xcodeproj`. Connect and trust your iPhone, select the FermaxoRacing target, open **Signing & Capabilities**, turn on **Automatically manage signing**, and select your **Personal Team**. Sign in to Xcode with your Apple Account if needed.
+3. Enable Developer Mode on the iPhone if iOS asks. In Xcode, select the connected iPhone as the run destination and build the app once so Xcode registers the iPhone and creates a development provisioning profile.
+4. Find the resulting `Fermaxo Racing.app` in Xcode's DerivedData `Build/Products/Debug-iphoneos` folder. In Terminal, run `ios/package-configurator-ipa.sh "/full/path/Fermaxo Racing.app"`.
+5. In Apple Configurator, add the generated `FermaxoRacing-signed.ipa` and install it on that same iPhone.
+
+A free Personal Team profile is valid for seven days and is limited to registered devices; after it expires, rebuild and reinstall from Xcode. Apple's instructions describe installing a device-signed app using Apple Configurator and the Personal Team limits: https://developer.apple.com/documentation/xcode/distributing-your-app-to-registered-devices and https://developer.apple.com/help/account/basics/about-your-developer-account.
