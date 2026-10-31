@@ -23,6 +23,19 @@ if(state.lastStatus!==null&&state.lastStatus!==fi.k)notifyStatus(fi.k,fi.meaning
 const performanceAllowed=p.sessionGroup==="PRACTICE"||p.sessionGroup==="QUALIFYING";$("performance").classList.toggle("hidden",!performanceAllowed);if(performanceAllowed){if(p.mapReady===true){set("mapStatus","CALIBRATED");if(p.mapSvg)$("trackmap").innerHTML=p.mapSvg}else{set("mapStatus","TRACK MAP CALIBRATING");$("trackmap").textContent="TRACK MAP CALIBRATING"}}set("position",p.position??"--");set("miniDelta",Number.isFinite(p.miniSectorDelta)?((p.miniSectorDelta>0?"+":"")+p.miniSectorDelta.toFixed(3)+"s"):"--");
 const lapDelta=$("lapDelta");if(performanceAllowed&&p.referenceValid===true&&Number.isFinite(p.lapDelta)){lapDelta.classList.remove("hidden");set("deltaLabel",p.sessionGroup==="QUALIFYING"?"DELTA TO REFERENCE":"LAP DELTA");set("deltaValue",(p.lapDelta>0?"+":"")+p.lapDelta.toFixed(3)+"s");$("deltaValue").style.color=p.lapDelta<=0?"var(--green)":"var(--red)"}else lapDelta.classList.add("hidden");
 set("stamp",new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"}))}
+function applyAdaptiveLayout(p){
+ const dash=document.querySelector(".dash");if(!dash)return;
+ const group=(p.sessionGroup||"UNKNOWN").toUpperCase(),sc=(p.safetyCar||"").toUpperCase(),flag=(p.flag||"").toUpperCase();
+ dash.dataset.mode=sc==="VSC"?"vsc":sc==="SAFETY CAR"?"safety-car":group==="QUALIFYING"?"qualifying":group==="PRACTICE"?"practice":"race";
+ dash.dataset.flag=flag.toLowerCase().replaceAll("_","-");
+ const temps=p.tyreTemps||[],wear=p.tyreWear||[];
+ dash.classList.toggle("tyre-critical",temps.some(v=>Number.isFinite(v)&&(v<65||v>115))||wear.some(v=>Number.isFinite(v)&&v>=70));
+ dash.classList.toggle("ers-critical",Number.isFinite(p.ersPercent)&&(p.ersPercent<=15||p.ersPercent>=90)||p.overtake==="ACTIVE"||p.ersMode==="BOOST");
+ dash.classList.toggle("map-ready",p.mapReady===true);
+ dash.classList.toggle("flag-critical",["YELLOW","DOUBLE_YELLOW","BLUE","RED","CHEQUERED","WHITE"].includes(flag));
+}
+const originalRender=render;
+render=function(p){originalRender(p);applyAdaptiveLayout(p)};
 window.FermaxoRender=render;
 if(window.FERMAXO_NATIVE){
   $("connect").hidden=true;
