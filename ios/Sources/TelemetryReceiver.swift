@@ -8,12 +8,16 @@ final class TelemetryReceiver: ObservableObject {
     @Published private(set) var isListening = false
     @Published private(set) var port: UInt16 = 20777
     @Published private(set) var localIPv4: String?
+    @Published private(set) var apiStatus = "STARTING"
+    @Published private(set) var apiPort: UInt16 = 8081
+    var apiBaseURL: String? { localIPv4.map { "http://\($0):\(apiPort)" } }
     var onSnapshot: (([String: Any]) -> Void)?
 
     private let queue = DispatchQueue(label: "com.fermaxo.udp")
     private var listener: NWListener?
+    private var apiServer: TelemetryAPIServer?
     private var snapshot: [String: Any] = [
-        "format": 2026, "status": "WAITING FOR PS5",
+        "format": 2026, "status": "WAITING FOR PS5", "updated": NSNull(),
         "trackName": NSNull(), "sessionName": NSNull(),
         "speed": NSNull(), "gear": NSNull(), "rpm": NSNull(), "rpmPercent": NSNull(),
         "throttle": NSNull(), "brake": NSNull(), "currentLapMs": NSNull(),
@@ -44,6 +48,7 @@ final class TelemetryReceiver: ObservableObject {
         status = "WAITING FOR PS5"
         snapshot["status"] = "WAITING FOR PS5"
         localIPv4 = Self.wifiIPv4()
+        startAPIServer()
         do {
             let listener = try NWListener(using: .udp, on: nwPort)
             listener.stateUpdateHandler = { [weak self] state in
@@ -79,7 +84,19 @@ final class TelemetryReceiver: ObservableObject {
     func stop() {
         listener?.cancel()
         listener = nil
+        apiServer?.stop()
+        apiServer = nil
         isListening = false
+    }
+
+    private func startAPIServer() {
+        let server = TelemetryAPIServer(port: apiPort) { [weak self] in
+            guard let self else { return [:] }
+            return self.queue.sync { self.snapshot }
+        }
+        server.onStatus = { [weak self] status in self?.apiStatus = status }
+        apiServer = server
+        server.start()
     }
 
     private func receive(on connection: NWConnection) {
@@ -90,6 +107,7 @@ final class TelemetryReceiver: ObservableObject {
                     if self.decode(data) {
                         self.lastPacket = Date()
                         self.snapshot["status"] = "LIVE"
+                        self.snapshot["updated"] = Date().timeIntervalSince1970
                         self.publish()
                     }
                 }
